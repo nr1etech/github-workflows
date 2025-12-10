@@ -18,7 +18,7 @@ on:
       publish-node-version:
         description: 'Node version to use for publish'
         required: false
-        default: '22'
+        default: '24'
         type: string
       pnpm-version:
         description: 'PNPM version to use'
