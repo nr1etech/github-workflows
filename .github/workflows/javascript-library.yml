@@ -113,7 +113,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-${{ matrix.node-version }}-pnpm-store-
       - name: Install dependencies
-        run: pnpm i --frozen-lockfile --prefer-offline
+        run: |
+          if [ -f "pnpm-workspace.yaml" ]; then
+            pnpm -r i --frozen-lockfile --prefer-offline
+          else
+            pnpm i --frozen-lockfile --prefer-offline
+          fi
       - name: Increment main branch version
         if: matrix.node-version == inputs.publish-node-version && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         run: echo VERSION="$(cd ${{ inputs.version-dir }} && pnpm version patch --no-git-tag-version)" >> $GITHUB_ENV
@@ -138,8 +143,20 @@ jobs:
           VERSION="$(echo ${TEMP_VERSION} | sed -E "s/[0-9]+$/$(date +%s)/")"
           echo "VERSION=${VERSION}" >> $GITHUB_ENV
           sed -i -E "s/${TEMP_VERSION}/${VERSION}/" package.json
-      - run: pnpm build
-      - run: pnpm test
+      - name: Build project
+        run: |
+          if [ -f "pnpm-workspace.yaml" ]; then
+            pnpm -r build
+          else
+            pnpm build
+          fi
+      - name: Run unit tests
+        run: |
+          if [ -f "pnpm-workspace.yaml" ]; then
+            pnpm -r test
+          else
+            pnpm test
+          fi
       - name: Setup git config
         if: matrix.node-version == inputs.publish-node-version && github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || (github.ref == 'refs/heads/develop' && inputs.develop-use-timestamp == false))
         run: |
